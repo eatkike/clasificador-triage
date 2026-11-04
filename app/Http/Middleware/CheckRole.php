@@ -4,25 +4,25 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
 {
-    public function handle(Request $request, Closure $next, string ...$roles): Response
+    /**
+     * Valida que el rol del usuario autenticado coincida con el requerido.
+     */
+    public function handle(Request $request, Closure $next, string $role): Response
     {
-        if (!auth()->check()) {
+        if (!Auth::check()) {
             return redirect()->route('login');
         }
 
-        $user = auth()->user();
+        $user = Auth::user();
 
-        if (!$user->is_active) {
-            auth()->logout();
-            return redirect()->route('login')->withErrors(['email' => 'Su cuenta se encuentra inactiva.']);
-        }
-
-        if (!in_array($user->role, $roles)) {
-            abort(403, 'Acceso denegado: No cuenta con los permisos necesarios para esta sección.');
+        // Comparación sin distinción de mayúsculas/minúsculas
+        if (strtolower($user->rol) !== strtolower($role)) {
+            abort(403, 'Acceso denegado: No cuenta con los privilegios suficientes para esta sección.');
         }
 
         return $next($request);
