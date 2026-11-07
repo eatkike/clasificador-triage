@@ -3,9 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\PersonalController;
-use App\Http\Controllers\Medico\PacienteController;
+//use App\Http\Controllers\Medico\PacienteController;
 use App\Http\Controllers\Enfermero\TriageController;
 use App\Http\Controllers\Medico\DashboardController;
+use App\Http\Controllers\Enfermero\PacienteController;
+
 
 
 
@@ -29,10 +31,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', function () { return "Dashboard Clínico (Panel de Monitoreo)"; })->name('dashboard');
     });
 
-    // Rutas del Enfermero
-    Route::middleware(['checkrole:enfermero'])->prefix('enfermero')->name('enfermero.')->group(function () {
-        Route::get('/triage', function () { return "Módulo de Captura de Signos (CRUD 3)"; })->name('triage.create');
-    });
+  
     // Rutas del Enfermero
     Route::middleware(['checkrole:enfermero'])->prefix('enfermero')->name('enfermero.')->group(function () {
         // Gestión de Pacientes (FN.4)

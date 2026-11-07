@@ -96,7 +96,7 @@ class AuthController extends Controller
         return match(strtolower($rol)) {
             'administrador', 'admin' => redirect()->route('admin.personal.index'),
             'médico', 'medico'       => redirect()->route('medico.dashboard'),
-            'enfermero'              => redirect()->route('enfermero.triage.create'),
+            'enfermero'              => redirect()->route('enfermero.pacientes.index'),
             default                  => redirect('/'),
         };
     }

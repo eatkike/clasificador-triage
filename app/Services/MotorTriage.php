@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\SignoVital;
 
-class MotorTriageService
+class MotorTriage
 {
     /**
      * Evalúa los signos vitales y devuelve el color de inmediatez y el criterio aplicado.

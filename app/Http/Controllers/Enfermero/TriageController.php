@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Paciente;
 use App\Models\SignoVital;
 use App\Models\HistorialTriage;
-use App\Services\MotorTriageService;
+use App\Services\MotorTriage;
 use Illuminate\Http\Request;
 
 class TriageController extends Controller
@@ -24,7 +24,7 @@ class TriageController extends Controller
     }
 
     // Procesar signos, evaluar y guardar dictamen
-    public function store(Request $request, $id_paciente, MotorTriageService $motorTriage)
+    public function store(Request $request, $id_paciente, MotorTriage $motorTriage)
     {
         // Validación estricta para evitar errores humanos (Iniciativa INI-04)
         $validated = $request->validate([
