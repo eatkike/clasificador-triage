@@ -111,14 +111,22 @@
                     <p class="text-muted small">Ingrese su correo institucional para recibir un enlace seguro de restablecimiento.</p>
                 </div>
                 
-                <form action="#" method="POST">
+                <form action="{{ route('password.email') }}" method="POST">
                     @csrf
-                    <div class="mb-3">
-                        <label class="form-label">Correo Registrado</label>
-                        <input type="email" class="form-control bg-white" placeholder="usuario@hospital.com">
-                    </div>
-                    <button type="button" class="btn btn-outline-triage w-100 py-2" onclick="alert('El módulo de envío de correos (SMTP) se habilitará en la siguiente fase de desarrollo.')">
-                        <i class="bi bi-envelope-paper me-2"></i>Solicitar Enlace
+    
+                    <label class="form-label font-weight-bold" style="font-size: 12px; color: #555;">CORREO REGISTRADO</label>
+                    <input type="email" name="correo" class="form-control mb-3" placeholder="usuario@hospital.com" required>
+    
+                    @error('correo') 
+                        <span class="text-danger d-block mb-2" style="font-size: 13px;">{{ $message }}</span> 
+                    @enderror
+
+                    @if(session('success')) 
+                        <span class="text-success d-block mb-2" style="font-size: 13px;">{{ session('success') }}</span> 
+                    @endif
+
+                    <button type="submit" class="btn btn-outline-secondary w-100 font-weight-bold">
+                    <i class="bi bi-envelope"></i> Solicitar Enlace
                     </button>
                 </form>
             </div>

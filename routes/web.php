@@ -16,6 +16,12 @@ Route::get('/', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'authenticate'])->name('login.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Recuperación de Contraseña
+Route::get('/recuperar-password', [App\Http\Controllers\AuthController::class, 'showLinkRequestForm'])->name('password.request');
+Route::post('/recuperar-password', [App\Http\Controllers\AuthController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::get('/restablecer-password/{token}', [App\Http\Controllers\AuthController::class, 'showResetForm'])->name('password.reset');
+Route::post('/restablecer-password', [App\Http\Controllers\AuthController::class, 'resetPassword'])->name('password.update');
+
 // Rutas Protegidas
 Route::middleware(['auth'])->group(function () {
 

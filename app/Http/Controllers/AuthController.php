@@ -6,6 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Hash;
+
 
 class AuthController extends Controller
 {
@@ -99,5 +104,64 @@ class AuthController extends Controller
             'enfermero'              => redirect()->route('enfermero.pacientes.index'),
             default                  => redirect('/'),
         };
+    }
+    //envio de correos
+    // 1. Mostrar el formulario para pedir el correo
+    public function showLinkRequestForm()
+    {
+        return view('auth.passwords.email');
+    }
+
+    // 2. Generar el token y enviar el correo vía Gmail
+    public function sendResetLinkEmail(Request $request)
+    {
+        $request->validate(['correo' => 'required|email|exists:usuarios,correo']);
+
+        $token = Str::random(64);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['correo' => $request->correo],
+            ['token' => $token, 'created_at' => now()]
+        );
+
+        Mail::send('emails.recuperar', ['token' => $token, 'correo' => $request->correo], function($message) use ($request) {
+            $message->to($request->correo);
+            $message->subject('Recuperación de Contraseña - Triage UPEMOR');
+        });
+
+        return back()->with('success', 'Te hemos enviado el enlace de recuperación a tu correo electrónico.');
+    }
+
+    // 3. Mostrar el formulario para escribir la nueva contraseña
+    public function showResetForm(Request $request, $token)
+    {
+        return view('auth.passwords.reset', ['token' => $token, 'correo' => $request->correo]);
+    }
+
+    // 4. Procesar el cambio en la base de datos
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'correo' => 'required|email|exists:usuarios,correo',
+            'password' => 'required|min:6|confirmed',
+            'token' => 'required'
+        ]);
+
+        $reset = DB::table('password_reset_tokens')
+            ->where('correo', $request->correo)
+            ->where('token', $request->token)
+            ->first();
+
+        if (!$reset) {
+            return back()->withErrors(['correo' => 'El token es inválido o ha expirado.']);
+        }
+
+        DB::table('usuarios')->where('correo', $request->correo)->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        DB::table('password_reset_tokens')->where('correo', $request->correo)->delete();
+
+        return redirect('/')->with('success', 'Tu contraseña ha sido actualizada correctamente. Ya puedes iniciar sesión.');
     }
 }
