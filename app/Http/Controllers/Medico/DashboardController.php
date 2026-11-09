@@ -36,7 +36,7 @@ class DashboardController extends Controller
             'estado_atencion' => 'En Consultorio'
         ]);
 
-        return redirect()->route('medico.consultorio')->with('success', 'El paciente ha sido ingresado a su consultorio.');
+        return redirect()->route('medico.consultorio', $id_triage)->with('success', 'El paciente ha sido ingresado a su consultorio.');
     }
     // Mostrar la pantalla del consultorio con el expediente completo
     public function consultorio($id_triage)
