@@ -174,6 +174,9 @@
                                                 <!-- Próximo botón para enviar a Toma de Signos (FN.5) -->
                         
                                                 <a href="{{ route('enfermero.triage.create', $pac->id_paciente) }}" class="btn btn-sm btn-outline-primary" title="Pasar a Triage"><i class="bi bi-clipboard2-pulse"></i> Triage</a>
+                                                <a href="{{ route('enfermero.triage.ticket', 1) }}" target="_blank" class="btn btn-sm btn-outline-danger" title="Imprimir Ticket">
+                                                    <i class="bi bi-file-pdf"></i> Generar PDF
+                                                </a>
                                             </td>
                                         </tr>
                                     @empty

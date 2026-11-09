@@ -8,6 +8,9 @@ use App\Models\SignoVital;
 use App\Models\HistorialTriage;
 use App\Services\MotorTriage;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\DB;
+
 
 class TriageController extends Controller
 {
@@ -61,5 +64,32 @@ class TriageController extends Controller
 
         return redirect()->route('enfermero.pacientes.index')
             ->with('success', "Paciente evaluado exitosamente: CLASIFICACIÓN {$dictamen['color']}.");
+    }
+    public function generarTicket($id_triage)
+    {
+        // Consultar los datos exactos del triage y del paciente
+        $triage = DB::table('historial_triage')
+            ->join('pacientes', 'historial_triage.id_paciente', '=', 'pacientes.id_paciente')
+            ->join('signos_vitales', 'historial_triage.id_paciente', '=', 'signos_vitales.id_paciente')
+            ->select(
+                'historial_triage.*', 
+                'pacientes.nombre', 'pacientes.apellidoPat', 'pacientes.fechaNacimiento',
+                'signos_vitales.frecuencia_cardiaca', 'signos_vitales.frecuencia_respiratoria', 
+                'signos_vitales.temperatura', 'signos_vitales.saturacion_oxigeno', 
+                'signos_vitales.presion_sistolica', 'signos_vitales.presion_diastolica'
+            )
+            ->where('id_triage', $id_triage)
+            ->orderBy('signos_vitales.fecha_captura', 'desc')
+            ->first();
+
+        if (!$triage) {
+            return redirect()->back()->with('error', 'Ticket no encontrado.');
+        }
+
+        // Generar el PDF cargando una vista de Blade
+        $pdf = Pdf::loadView('enfermero.triage.ticket', compact('triage'));
+        
+        // Mostrar el PDF directamente en el navegador (stream) o forzar descarga (download)
+        return $pdf->stream('Ticket_Triage_NOM027_' . $triage->id_triage . '.pdf');
     }
 }

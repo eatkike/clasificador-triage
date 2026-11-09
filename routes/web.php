@@ -40,11 +40,10 @@ Route::middleware(['auth'])->group(function () {
         // Triage (FN.5 y FN.7)
         Route::get('/triage/{id_paciente}', [TriageController::class, 'create'])->name('triage.create');
         Route::post('/triage/{id_paciente}', [TriageController::class, 'store'])->name('triage.store');
-    
+        Route::get('/triage/ticket/{id_triage}', [TriageController::class, 'generarTicket'])->name('triage.ticket');
 
-        // La futura ruta de Signos Vitales
-        Route::get('/triage', function () { return "Módulo de Captura de Signos (CRUD 3)"; })->name('triage.create');
-    });
+
+        });
 
     // Rutas del Médico
     Route::middleware(['checkrole:médico'])->prefix('medico')->name('medico.')->group(function () {
