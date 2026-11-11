@@ -6,13 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Paciente;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class PacienteController extends Controller
 {
     public function index()
     {
-        // Ordenamos para ver primero a los más recientes
-        $pacientes = Paciente::orderBy('created_at', 'desc')->get();
+        // PANTALLA PRINCIPAL: Solo mostramos a los que acaban de llegar y están esperando Triage
+        $pacientes = DB::table('pacientes')
+            ->where('estado_atencion', 'Espera de Valoración')
+            ->orderBy('created_at', 'asc') // Ordenados por hora de llegada (el más antiguo primero)
+            ->get();
+
         return view('enfermero.pacientes.index', compact('pacientes'));
     }
 
@@ -37,23 +42,26 @@ class PacienteController extends Controller
         return redirect()->route('enfermero.pacientes.index')
             ->with('success', 'Expediente del paciente aperturado correctamente. Listo para Triage.');
     }
+    
     // Actualizar los datos personales del paciente
     public function updatePaciente(Request $request, $id_paciente)
     {
-        // Validamos los datos entrantes
+        // 1. Validamos usando los nombres EXACTOS de tus inputs en HTML
         $request->validate([
             'nombre' => 'required|string|max:100',
-            'apellidos' => 'required|string|max:100',
-            'fecha_nacimiento' => 'required|date',
-            'genero' => 'required|in:Masculino,Femenino,Otro'
+            'apellidoPat' => 'required|string|max:100',
+            'apellidoMat' => 'nullable|string|max:100',
+            'fechaNacimiento' => 'required|date',
+            'sexo' => 'required|in:Masculino,Femenino'
         ]);
 
-        // Actualizamos en la base de datos
+        // 2. Actualizamos usando los nombres EXACTOS de tu base de datos
         DB::table('pacientes')->where('id_paciente', $id_paciente)->update([
             'nombre' => $request->nombre,
-            'apellidos' => $request->apellidos,
-            'fecha_nacimiento' => $request->fecha_nacimiento,
-            'genero' => $request->genero,
+            'apellidoPat' => $request->apellidoPat,
+            'apellidoMat' => $request->apellidoMat,
+            'fechaNacimiento' => $request->fechaNacimiento,
+            'sexo' => $request->sexo,
             'updated_at' => now()
         ]);
 

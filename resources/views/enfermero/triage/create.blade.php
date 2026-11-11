@@ -10,12 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
     <style>
-        :root {
-            --triage-primary: #028090;
-            --triage-primary-hover: #026670;
-            --triage-bg: #f4f7f6;
-            --text-main: #2b2d42;
-        }
+        :root { --triage-primary: #028090; --triage-primary-hover: #026670; --triage-bg: #f4f7f6; --text-main: #2b2d42; }
         body { background-color: var(--triage-bg); font-family: 'Inter', sans-serif; color: var(--text-main); }
         .topbar { background-color: #ffffff; border-bottom: 1px solid #edf2f7; }
         .sub-navbar { background-color: var(--triage-primary); }
@@ -56,8 +51,8 @@
     </header>
 
     <nav class="sub-navbar px-4 py-2 shadow-sm d-flex gap-2">
-        <a href="{{ route('enfermero.pacientes.index') }}" class="nav-link-custom text-white"><i class="bi bi-arrow-left-circle me-2"></i>Volver a Pacientes</a>
-        <a href="#" class="nav-link-custom active"><i class="bi bi-clipboard2-pulse me-2"></i>Valoración de Signos Vitales</a>
+        <a href="{{ route('enfermero.pacientes.index') }}" class="nav-link-custom text-white"><i class="bi bi-arrow-left-circle me-2"></i>Volver a Recepción</a>
+        <a href="#" class="nav-link-custom active"><i class="bi bi-clipboard2-pulse me-2"></i>Captura de Signos y Triage</a>
     </nav>
 
     <main class="container py-5" style="max-width: 900px;">
@@ -78,79 +73,108 @@
                 <i class="bi bi-person-bounding-box fs-1 text-secondary me-4"></i>
                 <div>
                     <h4 class="fw-bold text-dark mb-1">Paciente: {{ $paciente->nombre }} {{ $paciente->apellidoPat }}</h4>
-                    <p class="text-muted mb-0"><i class="bi bi-calendar-event me-2"></i> Fecha de Nacimiento: {{ \Carbon\Carbon::parse($paciente->fechaNacimiento)->format('d/m/Y') }} &nbsp; | &nbsp; <i class="bi bi-gender-ambiguous me-2"></i>{{ $paciente->sexo }}</p>
+                    <p class="text-muted mb-0"><i class="bi bi-calendar-event me-2"></i> {{ \Carbon\Carbon::parse($paciente->fechaNacimiento)->format('d/m/Y') }} &nbsp; | &nbsp; <i class="bi bi-gender-ambiguous me-2"></i>{{ $paciente->sexo }}</p>
                 </div>
             </div>
         </div>
 
-        <form action="{{ route('enfermero.triage.store', $paciente->id_paciente) }}" method="POST">
+        <form action="{{ route('enfermero.triage.store', $paciente->id_paciente) }}" method="POST" id="formTriage">
             @csrf
             <div class="card card-clinical border-0 shadow-sm">
                 <div class="card-header-clinical">
-                    <h6 class="fw-bold mb-0 text-dark text-uppercase"><i class="bi bi-activity text-danger me-2"></i>Captura de Signos Vitales</h6>
+                    <h6 class="fw-bold mb-0 text-dark text-uppercase"><i class="bi bi-activity text-danger me-2"></i>Captura Inicial de Parámetros</h6>
                 </div>
                 <div class="card-body p-4">
                     <div class="row g-4">
                         <div class="col-md-6">
                             <label class="form-label">Presión Sistólica</label>
                             <div class="input-group">
-                                <input type="number" name="presion_sistolica" class="form-control" value="{{ old('presion_sistolica') }}" required>
+                                <input type="number" name="presion_sistolica" class="form-control" min="0" max="300" required>
                                 <span class="input-group-text">mmHg</span>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Presión Diastólica</label>
                             <div class="input-group">
-                                <input type="number" name="presion_diastolica" class="form-control" value="{{ old('presion_diastolica') }}" required>
+                                <input type="number" name="presion_diastolica" class="form-control" min="0" max="200" required>
                                 <span class="input-group-text">mmHg</span>
                             </div>
                         </div>
-                        
                         <div class="col-md-6">
                             <label class="form-label">Frecuencia Cardíaca</label>
                             <div class="input-group">
-                                <input type="number" name="frecuencia_cardiaca" class="form-control" value="{{ old('frecuencia_cardiaca') }}" required>
+                                <input type="number" name="frecuencia_cardiaca" class="form-control" min="0" max="300" required>
                                 <span class="input-group-text">lpm</span>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Frecuencia Respiratoria</label>
                             <div class="input-group">
-                                <input type="number" name="frecuencia_respiratoria" class="form-control" value="{{ old('frecuencia_respiratoria') }}" required>
+                                <input type="number" name="frecuencia_respiratoria" class="form-control" min="0" max="100" required>
                                 <span class="input-group-text">rpm</span>
                             </div>
                         </div>
-
                         <div class="col-md-6">
                             <label class="form-label">Temperatura Corporal</label>
                             <div class="input-group">
-                                <input type="number" step="0.1" name="temperatura" class="form-control" value="{{ old('temperatura') }}" required>
+                                <input type="number" step="0.1" name="temperatura" class="form-control" min="20" max="45" required>
                                 <span class="input-group-text">°C</span>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label text-danger"><i class="bi bi-lungs-fill me-1"></i>Saturación de Oxígeno (SpO2)</label>
+                            <label class="form-label text-danger"><i class="bi bi-lungs-fill me-1"></i>Saturación Oxígeno (SpO2)</label>
                             <div class="input-group">
-                                <input type="number" name="saturacion_oxigeno" class="form-control border-danger border-opacity-50" value="{{ old('saturacion_oxigeno') }}" required>
+                                <input type="number" name="saturacion_oxigeno" class="form-control border-danger border-opacity-50" min="0" max="100" required>
                                 <span class="input-group-text bg-danger bg-opacity-10 text-danger border-danger border-opacity-50">%</span>
                             </div>
                         </div>
 
-                        <div class="col-12 mt-4">
-                            <label class="form-label">Síntomas y Observaciones del Cuadro Clínico</label>
-                            <textarea name="sintomas_cualitativos" class="form-control" rows="3" required>{{ old('sintomas_cualitativos') ?? $paciente->motivo_consulta }}</textarea>
-                            <small class="text-muted">Describa signos evidentes (ej. palidez, diaforesis, pérdida de conciencia).</small>
+                        <!-- Checkboxes Cualitativos -->
+                        <div class="col-12 mt-4 p-3 bg-light border rounded">
+                            <label class="form-label text-dark fw-bold mb-3"><i class="bi bi-clipboard2-plus me-2"></i>Condiciones Clínicas Agudas (Marcadores de Severidad)</label>
+                            <div class="row g-3">
+                                <div class="col-md-4"><div class="form-check"><input class="form-check-input" type="checkbox" name="condiciones[]" value="Inconsciente / Paro" id="chk1"><label class="form-check-label text-danger fw-bold" for="chk1">Inconsciente / Paro</label></div></div>
+                                <div class="col-md-4"><div class="form-check"><input class="form-check-input" type="checkbox" name="condiciones[]" value="Hemorragia Severa" id="chk2"><label class="form-check-label text-danger fw-bold" for="chk2">Hemorragia Severa</label></div></div>
+                                <div class="col-md-4"><div class="form-check"><input class="form-check-input" type="checkbox" name="condiciones[]" value="Dif. Respiratoria Severa" id="chk3"><label class="form-check-label text-warning fw-bold" for="chk3">Dificultad Respiratoria</label></div></div>
+                                <div class="col-md-4"><div class="form-check"><input class="form-check-input" type="checkbox" name="condiciones[]" value="Fractura Expuesta" id="chk4"><label class="form-check-label text-warning fw-bold" for="chk4">Fractura Expuesta</label></div></div>
+                                <div class="col-md-4"><div class="form-check"><input class="form-check-input" type="checkbox" name="condiciones[]" value="Alteración Mental" id="chk5"><label class="form-check-label text-warning fw-bold" for="chk5">Alteración Mental</label></div></div>
+                                <div class="col-md-4"><div class="form-check"><input class="form-check-input" type="checkbox" name="condiciones[]" value="Dolor Leve/Moderado" id="chk6"><label class="form-check-label text-success fw-bold" for="chk6">Dolor Leve/Moderado</label></div></div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="card-footer bg-white border-top p-4 text-end">
                     <button type="submit" class="btn btn-triage btn-lg px-5">
-                        <i class="bi bi-cpu me-2"></i>EVALUAR Y GUARDAR DICTAMEN
+                        <i class="bi bi-cpu me-2"></i>EVALUAR Y GENERAR DICTAMEN
                     </button>
                 </div>
             </div>
         </form>
-
     </main>
+
+    <script>
+        // Validaciones "Soft Limits" antes de enviar el formulario
+        document.getElementById('formTriage').addEventListener('submit', function(e) {
+            let warnings = [];
+            let sis = parseInt(document.querySelector('[name="presion_sistolica"]').value);
+            let dia = parseInt(document.querySelector('[name="presion_diastolica"]').value);
+            let fc = parseInt(document.querySelector('[name="frecuencia_cardiaca"]').value);
+            let fr = parseInt(document.querySelector('[name="frecuencia_respiratoria"]').value);
+            let temp = parseFloat(document.querySelector('[name="temperatura"]').value);
+            let spo2 = parseInt(document.querySelector('[name="saturacion_oxigeno"]').value);
+
+            if(temp < 35.5 || temp > 39.5) warnings.push(`- Temperatura inusual (${temp}°C)`);
+            if(fc < 45 || fc > 140) warnings.push(`- Frecuencia cardíaca inusual (${fc} lpm)`);
+            if(fr < 12 || fr > 25) warnings.push(`- Frecuencia respiratoria inusual (${fr} rpm)`);
+            if(sis < 90 || sis > 180) warnings.push(`- Tensión sistólica inusual (${sis} mmHg)`);
+            if(dia < 50 || dia > 120) warnings.push(`- Tensión diastólica inusual (${dia} mmHg)`);
+            if(spo2 < 88) warnings.push(`- Saturación de O2 extremadamente baja (${spo2}%)`);
+
+            if(warnings.length > 0) {
+                let confirmacion = confirm("⚠️ ADVERTENCIA CLÍNICA DE RANGOS\n\nSe detectaron valores que podrían indicar un compromiso vital severo o un error de captura:\n\n" + warnings.join("\n") + "\n\n¿Confirma que estos datos son correctos y proceden del monitor de signos?");
+                if(!confirmacion) e.preventDefault();
+            }
+        });
+    </script>
 </body>
 </html>

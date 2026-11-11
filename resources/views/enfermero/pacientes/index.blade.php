@@ -62,9 +62,9 @@
     </header>
 
     <nav class="sub-navbar px-4 py-2 shadow-sm d-flex gap-2 overflow-auto">
-        <a href="{{ route('enfermero.dashboard') }}" class="nav-link-custom"><i class="bi bi-display me-2"></i>Dashboard Urgencias</a>
-        <a href="{{ route('enfermero.pacientes.index') }}" class="nav-link-custom active"><i class="bi bi-person-lines-fill me-2"></i>Pacientes</a>
-        <a href="{{ route('enfermero.signos') }}" class="nav-link-custom"><i class="bi bi-clipboard2-pulse me-2"></i>Signos Vitales</a>
+        <a href="{{ route('enfermero.dashboard') }}" class="nav-link-custom {{ request()->routeIs('enfermero.dashboard') ? 'active' : '' }}"><i class="bi bi-display me-2"></i>Dashboard</a>
+        <a href="{{ route('enfermero.pacientes.index') }}" class="nav-link-custom {{ request()->routeIs('enfermero.pacientes.index') ? 'active' : '' }}"><i class="bi bi-person-plus me-2"></i>Recepción (Fila Activa)</a>
+        <a href="{{ route('enfermero.signos') }}" class="nav-link-custom {{ request()->routeIs('enfermero.signos') ? 'active' : '' }}"><i class="bi bi-folder2-open me-2"></i>Directorio de Pacientes</a>
     </nav>
 
     <main class="container-fluid px-4 py-5" style="max-width: 1400px;">

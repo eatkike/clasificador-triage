@@ -68,8 +68,13 @@ Route::middleware(['auth'])->group(function () {
         
         // 3. Triage y Signos
         Route::get('/signos', [App\Http\Controllers\Enfermero\TriageController::class, 'signos'])->name('signos');
+        Route::post('/triage/{id_paciente}', [App\Http\Controllers\Enfermero\TriageController::class, 'store'])->name('triage.store');
         Route::get('/triage/{id_paciente}', [App\Http\Controllers\Enfermero\TriageController::class, 'create'])->name('triage.create');
         Route::get('/triage/ticket/{id_triage}', [App\Http\Controllers\Enfermero\TriageController::class, 'ticket'])->name('triage.ticket');
+
+        // Rutas nuevas para EDITAR Triage
+        Route::get('/triage/{id_paciente}/editar', [App\Http\Controllers\Enfermero\TriageController::class, 'edit'])->name('triage.edit');
+        Route::put('/triage/{id_paciente}/editar', [App\Http\Controllers\Enfermero\TriageController::class, 'update'])->name('triage.update');
     });
 
     // Rutas del Médico
