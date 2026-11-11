@@ -26,11 +26,27 @@ Route::post('/restablecer-password', [App\Http\Controllers\AuthController::class
 Route::middleware(['auth'])->group(function () {
 
     // Rutas del Administrador
-    Route::middleware(['checkrole:administrador'])->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/personal', [PersonalController::class, 'index'])->name('personal.index');
-        Route::post('/personal', [PersonalController::class, 'store'])->name('personal.store');
-        Route::post('/personal/{id}/toggle', [PersonalController::class, 'toggleStatus'])->name('personal.toggle');
-    });
+    Route::middleware(['auth', 'checkrole:administrador'])->prefix('admin')->name('admin.')->group(function () {
+        
+        // Gestión de Personal Clínico
+        Route::get('/personal', [App\Http\Controllers\Admin\AdminController::class, 'index'])->name('personal.index');
+        Route::post('/personal', [App\Http\Controllers\Admin\AdminController::class, 'store'])->name('personal.store');
+        Route::post('/personal/toggle/{id_usuario}', [App\Http\Controllers\Admin\AdminController::class, 'toggle'])->name('personal.toggle');
+         // Esta es la ruta para guardar la edición
+        Route::put('/personal/{id_usuario}', [App\Http\Controllers\Admin\AdminController::class, 'update'])->name('personal.update');
+      
+        // Reportes Estadísticos
+        Route::get('/reportes', [App\Http\Controllers\Admin\AdminController::class, 'reportes'])->name('reportes');
+        // Reportes Estadísticos
+        Route::get('/reportes', [App\Http\Controllers\Admin\AdminController::class, 'reportes'])->name('reportes');
+        
+        // Gestión de Respaldos
+        Route::get('/respaldos', [App\Http\Controllers\Admin\AdminController::class, 'respaldosIndex'])->name('respaldos.index');
+        Route::post('/respaldos/generar', [App\Http\Controllers\Admin\AdminController::class, 'generarRespaldo'])->name('respaldos.generar');
+        Route::get('/respaldos/descargar/{nombre}', [App\Http\Controllers\Admin\AdminController::class, 'descargarRespaldo'])->name('respaldos.descargar');
+        Route::delete('/respaldos/eliminar/{nombre}', [App\Http\Controllers\Admin\AdminController::class, 'eliminarRespaldo'])->name('respaldos.eliminar');
+        });
+
 
     // Rutas del Médico
     Route::middleware(['checkrole:médico'])->prefix('medico')->name('medico.')->group(function () {
@@ -38,18 +54,23 @@ Route::middleware(['auth'])->group(function () {
     });
 
   
-    // Rutas del Enfermero
-    Route::middleware(['checkrole:enfermero'])->prefix('enfermero')->name('enfermero.')->group(function () {
-        // Gestión de Pacientes (FN.4)
-        Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.index');
-        Route::post('/pacientes', [PacienteController::class, 'store'])->name('pacientes.store');
-        // Triage (FN.5 y FN.7)
-        Route::get('/triage/{id_paciente}', [TriageController::class, 'create'])->name('triage.create');
-        Route::post('/triage/{id_paciente}', [TriageController::class, 'store'])->name('triage.store');
-        Route::get('/triage/ticket/{id_triage}', [TriageController::class, 'generarTicket'])->name('triage.ticket');
-
-
-        });
+   // Rutas del Enfermero
+    Route::middleware(['auth', 'checkrole:enfermero'])->prefix('enfermero')->name('enfermero.')->group(function () {
+        
+        // 1. Dashboard de Urgencias (Asegúrate de que tenga el name 'dashboard')
+        Route::get('/dashboard', [App\Http\Controllers\Enfermero\TriageController::class, 'dashboard'])->name('dashboard');
+        
+        // 2. Recepción de Pacientes (CRUD)
+        Route::get('/pacientes', [App\Http\Controllers\Enfermero\PacienteController::class, 'index'])->name('pacientes.index');
+        Route::post('/pacientes', [App\Http\Controllers\Enfermero\PacienteController::class, 'store'])->name('pacientes.store');
+        Route::put('/paciente/{id_paciente}', [App\Http\Controllers\Enfermero\PacienteController::class, 'updatePaciente'])->name('paciente.update');
+        Route::delete('/paciente/{id_paciente}', [App\Http\Controllers\Enfermero\PacienteController::class, 'destroyPaciente'])->name('paciente.destroy');
+        
+        // 3. Triage y Signos
+        Route::get('/signos', [App\Http\Controllers\Enfermero\TriageController::class, 'signos'])->name('signos');
+        Route::get('/triage/{id_paciente}', [App\Http\Controllers\Enfermero\TriageController::class, 'create'])->name('triage.create');
+        Route::get('/triage/ticket/{id_triage}', [App\Http\Controllers\Enfermero\TriageController::class, 'ticket'])->name('triage.ticket');
+    });
 
     // Rutas del Médico
     Route::middleware(['checkrole:médico'])->prefix('medico')->name('medico.')->group(function () {
@@ -60,5 +81,5 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/consultorio/{id_triage}', [DashboardController::class, 'consultorio'])->name('consultorio');
         Route::post('/consultorio/{id_triage}/alta', [DashboardController::class, 'darDeAlta'])->name('alta');
     });
-    
+
 });

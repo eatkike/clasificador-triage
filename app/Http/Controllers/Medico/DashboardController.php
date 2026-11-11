@@ -10,13 +10,23 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Cruzamos la tabla de historial con la de pacientes y ordenamos por urgencia real
+        $id_medico_actual = auth()->user()->id_usuario;
+
+        // Cruzamos la tabla y traemos a los de la fila + los que este doctor dejó a medias
         $pacientesEnEspera = DB::table('historial_triage')
             ->join('pacientes', 'historial_triage.id_paciente', '=', 'pacientes.id_paciente')
-            ->where('pacientes.estado_atencion', 'Clasificado')
+            ->where(function($query) use ($id_medico_actual) {
+                $query->where('pacientes.estado_atencion', 'Clasificado') // Los que esperan
+                      ->orWhere(function($q) use ($id_medico_actual) {
+                          $q->where('pacientes.estado_atencion', 'En Consultorio')
+                            ->where('historial_triage.id_medico', $id_medico_actual); // Los "atorados" de este doctor
+                      });
+            })
+            // Ordenamos para que los "En Consultorio" aparezcan hasta arriba de su lista
+            ->orderByRaw("FIELD(pacientes.estado_atencion, 'En Consultorio', 'Clasificado')") 
             ->orderByRaw("FIELD(color_calculado, 'Rojo', 'Naranja', 'Amarillo', 'Verde', 'Azul')")
-            ->orderBy('historial_triage.fecha_clasificacion', 'asc') // El que llegó primero de cada color
-            ->select('pacientes.*', 'historial_triage.color_calculado', 'historial_triage.criterio_aplicado', 'historial_triage.fecha_clasificacion', 'historial_triage.id_triage')
+            ->orderBy('historial_triage.fecha_clasificacion', 'asc')
+            ->select('pacientes.*', 'historial_triage.color_calculado', 'historial_triage.criterio_aplicado', 'historial_triage.fecha_clasificacion', 'historial_triage.id_triage', 'historial_triage.id_medico')
             ->get();
 
         return view('medico.dashboard.index', compact('pacientesEnEspera'));

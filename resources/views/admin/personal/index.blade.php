@@ -88,14 +88,13 @@
             </form>
         </div>
     </header>
-
-    <!-- Sub Navbar -->
+<!-- Sub Navbar -->
     <nav class="sub-navbar px-4 py-2 shadow-sm d-flex gap-2 overflow-auto">
         <a href="#" class="nav-link-custom"><i class="bi bi-shield-lock me-2"></i>Permisos</a>
         <a href="{{ route('admin.personal.index') }}" class="nav-link-custom active"><i class="bi bi-people me-2"></i>Personal Clínico</a>
         <a href="#" class="nav-link-custom"><i class="bi bi-card-checklist me-2"></i>Catálogos Triage</a>
-        <a href="#" class="nav-link-custom"><i class="bi bi-database-down me-2"></i>Respaldos BD</a>
-        <a href="#" class="nav-link-custom"><i class="bi bi-graph-up me-2"></i>Reportes</a>
+        <a href="{{ route('admin.respaldos.index') }}" class="nav-link-custom"><i class="bi bi-database-down me-2"></i>Respaldos BD</a>
+        <a href="{{ route('admin.reportes') }}" class="nav-link-custom"><i class="bi bi-graph-up me-2"></i>Reportes</a>
     </nav>
 
     <main class="container-fluid px-4 py-5" style="max-width: 1400px;">
@@ -228,7 +227,14 @@
                                                     @if($usr->is_active) <i class="bi bi-check-circle me-1"></i>Activo @else <i class="bi bi-x-circle me-1"></i>Inactivo @endif
                                                 </span>
                                             </td>
+
                                             <td class="text-end pe-4">
+                                                <!-- Botón Editar -->
+                                                <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#modalEdit{{ $usr->id_usuario }}" title="Editar datos">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+
+                                                <!-- Botón Suspender/Restaurar (Delete lógico) -->
                                                 <form action="{{ route('admin.personal.toggle', $usr->id_usuario) }}" method="POST" class="d-inline">
                                                     @csrf
                                                     <button type="submit" class="btn btn-sm {{ $usr->is_active ? 'btn-outline-danger' : 'btn-outline-success' }}" 
@@ -237,7 +243,55 @@
                                                         <i class="bi {{ $usr->is_active ? 'bi-dash-circle' : 'bi-check2-circle' }}"></i>
                                                     </button>
                                                 </form>
+
+                                                <!-- Modal Editar (Se genera uno por cada usuario) -->
+                                                <div class="modal fade text-start" id="modalEdit{{ $usr->id_usuario }}" tabindex="-1" aria-hidden="true">
+                                                    <div class="modal-dialog">
+                                                        <form action="{{ route('admin.personal.update', $usr->id_usuario) }}" method="POST" class="modal-content">
+                                                            @csrf
+                                                            @method('PUT')
+                                                            <div class="modal-header bg-primary text-white">
+                                                                <h5 class="modal-title">Editar Personal Clínico</h5>
+                                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Nombre(s)</label>
+                                                                    <input type="text" name="nombre" class="form-control" value="{{ $usr->nombre }}" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Apellidos</label>
+                                                                    <input type="text" name="apellidos" class="form-control" value="{{ $usr->apellidos }}" required>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Rol</label>
+                                                                    <select name="rol" class="form-select" required>
+                                                                        <option value="Médico" {{ $usr->rol == 'Médico' ? 'selected' : '' }}>Médico</option>
+                                                                        <option value="Enfermero" {{ $usr->rol == 'Enfermero' ? 'selected' : '' }}>Enfermero</option>
+                                                                        <option value="Administrador" {{ $usr->rol == 'Administrador' ? 'selected' : '' }}>Administrador</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Turno</label>
+                                                                    <select name="turno" class="form-select" required>
+                                                                        <option value="Matutino" {{ $usr->turno == 'Matutino' ? 'selected' : '' }}>Matutino</option>
+                                                                        <option value="Vespertino" {{ $usr->turno == 'Vespertino' ? 'selected' : '' }}>Vespertino</option>
+                                                                        <option value="Nocturno" {{ $usr->turno == 'Nocturno' ? 'selected' : '' }}>Nocturno</option>
+                                                                        <option value="Mixto" {{ $usr->turno == 'Mixto' ? 'selected' : '' }}>Mixto</option>
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
                                             </td>
+
+
+                                            
                                         </tr>
                                     @empty
                                         <tr>

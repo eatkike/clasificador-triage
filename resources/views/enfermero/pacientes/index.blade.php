@@ -13,7 +13,7 @@
 
     <style>
         :root {
-            --triage-primary: #028090; /* Un tono un poco más clínico/médico para enfermería */
+            --triage-primary: #028090;
             --triage-primary-hover: #026670;
             --triage-bg: #f4f7f6;
             --text-main: #2b2d42;
@@ -62,9 +62,9 @@
     </header>
 
     <nav class="sub-navbar px-4 py-2 shadow-sm d-flex gap-2 overflow-auto">
-        <a href="#" class="nav-link-custom"><i class="bi bi-display me-2"></i>Dashboard Urgencias</a>
+        <a href="{{ route('enfermero.dashboard') }}" class="nav-link-custom"><i class="bi bi-display me-2"></i>Dashboard Urgencias</a>
         <a href="{{ route('enfermero.pacientes.index') }}" class="nav-link-custom active"><i class="bi bi-person-lines-fill me-2"></i>Pacientes</a>
-        <a href="#" class="nav-link-custom"><i class="bi bi-clipboard2-pulse me-2"></i>Signos Vitales</a>
+        <a href="{{ route('enfermero.signos') }}" class="nav-link-custom"><i class="bi bi-clipboard2-pulse me-2"></i>Signos Vitales</a>
     </nav>
 
     <main class="container-fluid px-4 py-5" style="max-width: 1400px;">
@@ -77,7 +77,7 @@
         @endif
 
         <div class="row g-4">
-            <!-- Formulario de Registro de Paciente -->
+            <!-- Columna 1: Formulario de Registro -->
             <div class="col-lg-4">
                 <div class="card card-clinical h-100">
                     <div class="card-header-clinical">
@@ -133,7 +133,7 @@
                 </div>
             </div>
 
-            <!-- Tabla de Pacientes -->
+            <!-- Columna 2: Tabla de Pacientes -->
             <div class="col-lg-8">
                 <div class="card card-clinical h-100">
                     <div class="card-header-clinical d-flex justify-content-between align-items-center">
@@ -170,9 +170,20 @@
                                                 </span>
                                             </td>
                                             <td class="text-center pe-4">
-                                                <button class="btn btn-sm btn-outline-secondary me-1" title="Ver Detalles"><i class="bi bi-eye"></i></button>
-                                                <!-- Próximo botón para enviar a Toma de Signos (FN.5) -->
-                        
+                                                <!-- Botón Editar que llama al modal externo -->
+                                                <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#modalEditPac{{ $pac->id_paciente }}" title="Editar Paciente">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <!-- Botón Eliminar con Confirmación en JS -->
+                                                <form action="{{ route('enfermero.paciente.destroy', $pac->id_paciente) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger me-1" onclick="return confirm('⚠️ ADVERTENCIA: ¿Estás seguro de que deseas eliminar este expediente? Esta acción no se puede deshacer.')" title="Eliminar Paciente">
+                                                        <i class="bi bi-trash3"></i>
+                                                    </button>
+                                                </form>
+
+                                                <!-- Botones de Flujo -->
                                                 <a href="{{ route('enfermero.triage.create', $pac->id_paciente) }}" class="btn btn-sm btn-outline-primary" title="Pasar a Triage"><i class="bi bi-clipboard2-pulse"></i> Triage</a>
                                                 <a href="{{ route('enfermero.triage.ticket', 1) }}" target="_blank" class="btn btn-sm btn-outline-danger" title="Imprimir Ticket">
                                                     <i class="bi bi-file-pdf"></i> Generar PDF
@@ -193,9 +204,55 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </main>
+
+    <!-- ZONA DE MODALES (Renderizados fuera de la tabla para evitar el problema de transparencia) -->
+    @foreach($pacientes as $pac)
+        <div class="modal fade text-start" id="modalEditPac{{ $pac->id_paciente }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <form action="{{ route('enfermero.paciente.update', $pac->id_paciente) }}" method="POST" class="modal-content border-0 shadow">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header bg-primary text-white border-0">
+                        <h5 class="modal-title fw-bold">Editar Datos del Paciente</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4 bg-white">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label text-dark fw-bold">Nombre(s)</label>
+                                <input type="text" name="nombre" class="form-control" value="{{ $pac->nombre }}" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label text-dark fw-bold">Apellido Paterno</label>
+                                <input type="text" name="apellidoPat" class="form-control" value="{{ $pac->apellidoPat }}" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label text-dark fw-bold">Apellido Materno</label>
+                                <input type="text" name="apellidoMat" class="form-control" value="{{ $pac->apellidoMat }}">
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label text-dark fw-bold">Fecha de Nacimiento</label>
+                                <input type="date" name="fechaNacimiento" class="form-control" value="{{ $pac->fechaNacimiento }}" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label text-dark fw-bold">Sexo</label>
+                                <select name="sexo" class="form-select" required>
+                                    <option value="Masculino" {{ $pac->sexo == 'Masculino' ? 'selected' : '' }}>Masculino</option>
+                                    <option value="Femenino" {{ $pac->sexo == 'Femenino' ? 'selected' : '' }}>Femenino</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-top-0">
+                        <button type="button" class="btn btn-secondary fw-medium" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary fw-medium px-4">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endforeach
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

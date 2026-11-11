@@ -37,4 +37,37 @@ class PacienteController extends Controller
         return redirect()->route('enfermero.pacientes.index')
             ->with('success', 'Expediente del paciente aperturado correctamente. Listo para Triage.');
     }
+    // Actualizar los datos personales del paciente
+    public function updatePaciente(Request $request, $id_paciente)
+    {
+        // Validamos los datos entrantes
+        $request->validate([
+            'nombre' => 'required|string|max:100',
+            'apellidos' => 'required|string|max:100',
+            'fecha_nacimiento' => 'required|date',
+            'genero' => 'required|in:Masculino,Femenino,Otro'
+        ]);
+
+        // Actualizamos en la base de datos
+        DB::table('pacientes')->where('id_paciente', $id_paciente)->update([
+            'nombre' => $request->nombre,
+            'apellidos' => $request->apellidos,
+            'fecha_nacimiento' => $request->fecha_nacimiento,
+            'genero' => $request->genero,
+            'updated_at' => now()
+        ]);
+
+        return back()->with('success', 'Los datos del paciente han sido actualizados correctamente.');
+    }
+    // Eliminar expediente de paciente (con protección de llaves foráneas)
+    public function destroyPaciente($id_paciente)
+    {
+        try {
+            DB::table('pacientes')->where('id_paciente', $id_paciente)->delete();
+            return back()->with('success', 'El registro del paciente ha sido eliminado del sistema.');
+        } catch (\Exception $e) {
+            // Si el paciente ya tiene Triage o Signos Vitales, la BD bloqueará el borrado para no corromper historiales.
+            return back()->withErrors(['msg' => 'No se puede eliminar: El paciente ya tiene un historial clínico o signos vitales registrados.']);
+        }
+    }
 }
