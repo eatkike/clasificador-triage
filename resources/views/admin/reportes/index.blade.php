@@ -38,6 +38,7 @@
         <a href="{{ route('admin.personal.index') }}" class="nav-link-custom">Personal Clínico</a>
         <a href="{{ route('admin.catalogo.index') }}" class="nav-link-custom">Catálogos Triage</a>
         <a href="{{ route('admin.reportes') }}" class="nav-link-custom active">Reportes</a>
+        <a href="{{ route('admin.respaldos.index') }}" class="nav-link-custom"><i class="bi bi-database-down me-2"></i>Respaldos BD</a>    
     </nav>
 
     <main class="container py-4" style="max-width: 1100px;">
