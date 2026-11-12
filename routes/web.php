@@ -45,6 +45,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/respaldos/generar', [App\Http\Controllers\Admin\AdminController::class, 'generarRespaldo'])->name('respaldos.generar');
         Route::get('/respaldos/descargar/{nombre}', [App\Http\Controllers\Admin\AdminController::class, 'descargarRespaldo'])->name('respaldos.descargar');
         Route::delete('/respaldos/eliminar/{nombre}', [App\Http\Controllers\Admin\AdminController::class, 'eliminarRespaldo'])->name('respaldos.eliminar');
+        
+        // Catálogo Triage (FR6)
+        Route::get('/catalogo-triage', [App\Http\Controllers\Admin\AdminController::class, 'catalogo'])->name('catalogo.index');
+        Route::put('/catalogo-triage/{id_parametro}', [App\Http\Controllers\Admin\AdminController::class, 'updateCatalogo'])->name('catalogo.update');
+   
         });
 
 

@@ -78,22 +78,26 @@ class TriageController extends Controller
         $dia = $req->presion_diastolica;
         $spo2 = $req->saturacion_oxigeno;
         $temp = $req->temperatura;
-        $sintomas = $req->input('condiciones', []); // Array de checkboxes
+        $sintomas = $req->input('condiciones', []); 
 
-        // Nivel 1: ROJO (Resucitación)
+        // Extraer los parámetros dinámicos desde la base de datos (FR6)
+        $limiteFiebreNaranja = DB::table('parametros_triage')->where('clave_parametro', 'temp_fiebre_naranja')->value('valor') ?? 40.00;
+        $limiteFiebreAmarillo = DB::table('parametros_triage')->where('clave_parametro', 'temp_fiebre_amarillo')->value('valor') ?? 39.00;
+        $limiteFiebreVerde = DB::table('parametros_triage')->where('clave_parametro', 'temp_fiebre_verde')->value('valor') ?? 38.00;
+
         if (in_array('Inconsciente / Paro', $sintomas) || in_array('Hemorragia Severa', $sintomas) || $spo2 <= 85 || $fc <= 40 || $fc >= 130 || $fr <= 10 || $fr >= 35 || $sis <= 70) {
             return ['color' => 'Rojo', 'criterio' => 'Compromiso vital inminente. Pasar directo a choque.'];
         } 
-        // Nivel 2: NARANJA (Emergencia)
-        elseif (in_array('Dif. Respiratoria Severa', $sintomas) || in_array('Alteración Mental', $sintomas) || $spo2 <= 89 || $sis >= 200 || $sis <= 90 || $dia >= 120 || $temp >= 40 || $temp <= 35) {
+        // USANDO EL PARÁMETRO DINÁMICO (NARANJA)
+        elseif (in_array('Dif. Respiratoria Severa', $sintomas) || in_array('Alteración Mental', $sintomas) || $spo2 <= 89 || $sis >= 200 || $sis <= 90 || $dia >= 120 || $temp >= $limiteFiebreNaranja || $temp <= 35) {
             return ['color' => 'Naranja', 'criterio' => 'Emergencia. Riesgo de pérdida de función u órgano.'];
         } 
-        // Nivel 3: AMARILLO (Urgencia)
-        elseif (in_array('Fractura Expuesta', $sintomas) || $spo2 <= 94 || $sis >= 160 || $temp >= 39) {
+        // USANDO EL PARÁMETRO DINÁMICO (AMARILLO)
+        elseif (in_array('Fractura Expuesta', $sintomas) || $spo2 <= 94 || $sis >= 160 || $temp >= $limiteFiebreAmarillo) {
             return ['color' => 'Amarillo', 'criterio' => 'Urgencia calificada. Requiere atención rápida.'];
         } 
-        // Nivel 4: VERDE (Urgencia Menor)
-        elseif (in_array('Dolor Leve/Moderado', $sintomas) || $temp >= 38 || $sis >= 140) {
+        // USANDO EL PARÁMETRO DINÁMICO (VERDE)
+        elseif (in_array('Dolor Leve/Moderado', $sintomas) || $temp >= $limiteFiebreVerde || $sis >= 140) {
             return ['color' => 'Verde', 'criterio' => 'Urgencia menor. Paciente estable.'];
         }
 

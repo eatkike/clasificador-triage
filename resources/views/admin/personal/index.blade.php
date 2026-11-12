@@ -90,10 +90,9 @@
     </header>
 <!-- Sub Navbar -->
     <nav class="sub-navbar px-4 py-2 shadow-sm d-flex gap-2 overflow-auto">
-        <a href="#" class="nav-link-custom"><i class="bi bi-shield-lock me-2"></i>Permisos</a>
+        <!--<a href="#" class="nav-link-custom"><i class="bi bi-shield-lock me-2"></i>Permisos</a>-->
         <a href="{{ route('admin.personal.index') }}" class="nav-link-custom active"><i class="bi bi-people me-2"></i>Personal Clínico</a>
-        <a href="#" class="nav-link-custom"><i class="bi bi-card-checklist me-2"></i>Catálogos Triage</a>
-        <a href="{{ route('admin.respaldos.index') }}" class="nav-link-custom"><i class="bi bi-database-down me-2"></i>Respaldos BD</a>
+        <a href="{{ route('admin.catalogo.index') }}" class="nav-link-custom"><i class="bi bi-sliders me-2"></i>Catálogo Triage</a>
         <a href="{{ route('admin.reportes') }}" class="nav-link-custom"><i class="bi bi-graph-up me-2"></i>Reportes</a>
     </nav>
 

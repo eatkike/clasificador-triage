@@ -21,6 +21,28 @@ class AdminController extends Controller
         return view('admin.personal.index', compact('usuarios'));
     }
 
+    // Mostrar el catálogo de parámetros
+    public function catalogo()
+    {
+        $parametros = DB::table('parametros_triage')->get();
+        return view('admin.catalogo.index', compact('parametros'));
+    }
+
+    // Actualizar un parámetro específico
+    public function updateCatalogo(Request $request, $id_parametro)
+    {
+        $request->validate([
+            'valor' => 'required|numeric|min:0'
+        ]);
+
+        DB::table('parametros_triage')->where('id_parametro', $id_parametro)->update([
+            'valor' => $request->valor,
+            'updated_at' => now()
+        ]);
+
+        return back()->with('success', 'Parámetro clínico actualizado. El algoritmo utilizará este nuevo valor a partir de ahora.');
+    }
+
     // Registrar nuevo personal
     public function store(Request $request)
     {
