@@ -28,8 +28,8 @@
         .card-header-clinical { background-color: transparent; border-bottom: 1px solid #edf2f7; padding: 1.25rem 1.5rem; }
         .form-control { border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.95rem; }
         .form-control:focus { border-color: var(--triage-primary); box-shadow: 0 0 0 0.25rem rgba(15, 76, 92, 0.1); }
-        .table-custom th { text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; border-bottom: 2px solid #edf2f7; background-color: #f8fafc; padding: 1rem; }
-        .table-custom td { vertical-align: middle; padding: 1rem; border-bottom: 1px solid #edf2f7; color: #4a5568; }
+        .table-custom td { vertical-align: middle; padding: 0.8rem 1rem; border-bottom: 1px solid #edf2f7; }
+        .table-custom tr:last-child td { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -58,15 +58,13 @@
         </div>
     </header>
 
-    <!-- Sub Navbar Integrada -->
     <nav class="sub-navbar px-4 py-2 shadow-sm d-flex gap-2 overflow-auto">
-        <!--<a href="#" class="nav-link-custom"><i class="bi bi-shield-lock me-2"></i>Permisos</a>-->
         <a href="{{ route('admin.personal.index') }}" class="nav-link-custom"><i class="bi bi-people me-2"></i>Personal Clínico</a>
         <a href="{{ route('admin.catalogo.index') }}" class="nav-link-custom active"><i class="bi bi-sliders me-2"></i>Catálogo Triage</a>
         <a href="{{ route('admin.reportes') ?? '#' }}" class="nav-link-custom"><i class="bi bi-graph-up me-2"></i>Reportes</a>
     </nav>
 
-    <main class="container py-5" style="max-width: 1000px;">
+    <main class="container-fluid py-5 px-4" style="max-width: 1400px;">
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3">
                 <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
@@ -74,66 +72,90 @@
             </div>
         @endif
 
-        <div class="card card-clinical h-100">
-            <div class="card-header-clinical">
-                <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-sliders me-2 text-primary"></i>Configuración de Parámetros Clínicos (NOM-027)</h5>
-                <small class="text-muted">Los cambios realizados aquí afectarán la evaluación algorítmica de los pacientes en tiempo real.</small>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-custom table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th class="ps-4">Parámetro Biológico</th>
-                                <th>Clave del Sistema</th>
-                                <th>Valor Límite</th>
-                                <th>Unidad</th>
-                                <th class="text-center pe-4">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($parametros as $param)
-                                <tr>
-                                    <td class="ps-4 fw-bold text-dark">{{ $param->nombre_descriptivo }}</td>
-                                    <td><span class="badge bg-light text-secondary border">{{ $param->clave_parametro }}</span></td>
-                                    <td class="fw-bold fs-5" style="color: var(--triage-primary);">{{ $param->valor }}</td>
-                                    <td class="text-muted">{{ $param->unidad_medida }}</td>
-                                    <td class="text-center pe-4">
-                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalParam{{ $param->id_parametro }}" title="Modificar límite">
-                                            <i class="bi bi-pencil-square"></i> Editar
-                                        </button>
-                                    </td>
-                                </tr>
+        <div class="mb-4">
+            <h4 class="fw-bold text-dark"><i class="bi bi-ui-checks-grid me-2 text-primary"></i>Configuración de Algoritmo (NOM-027)</h4>
+            <p class="text-muted">Ajusta los límites clínicos por categoría. Los cambios aplican de inmediato en la recepción del hospital.</p>
+        </div>
 
-                                <!-- Modal Editar Parámetro -->
-                                <div class="modal fade text-start" id="modalParam{{ $param->id_parametro }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-sm">
-                                        <form action="{{ route('admin.catalogo.update', $param->id_parametro) }}" method="POST" class="modal-content border-0 shadow">
-                                            @csrf @method('PUT')
-                                            <div class="modal-header text-white border-0" style="background-color: var(--triage-primary);">
-                                                <h6 class="modal-title fw-bold">Actualizar Límite</h6>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body p-4 bg-white">
-                                                <label class="form-label text-muted">{{ $param->nombre_descriptivo }}</label>
-                                                <div class="input-group">
-                                                    <input type="number" step="0.1" name="valor" class="form-control fw-bold" value="{{ $param->valor }}" required>
-                                                    <span class="input-group-text">{{ $param->unidad_medida }}</span>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer bg-light border-top-0">
-                                                <button type="submit" class="btn w-100 fw-bold text-white" style="background-color: var(--triage-primary);">Aplicar Cambio</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </tbody>
-                    </table>
+        @php
+            // Agrupamos los parámetros dinámicamente por su unidad de medida
+            $grupos = collect($parametros)->groupBy('unidad_medida');
+            
+            // Diccionario para ponerle nombres e iconos bonitos a cada grupo
+            $infoCategorias = [
+                '°C' => ['icono' => 'bi-thermometer-high text-danger', 'titulo' => 'Temperatura Corporal'],
+                'mmHg' => ['icono' => 'bi-heart-pulse text-danger', 'titulo' => 'Presión Arterial (Sistólica / Diastólica)'],
+                '%' => ['icono' => 'bi-lungs text-info', 'titulo' => 'Saturación de Oxígeno (SpO2)'],
+                'lpm' => ['icono' => 'bi-activity text-success', 'titulo' => 'Frecuencia Cardíaca'],
+                'rpm' => ['icono' => 'bi-wind text-primary', 'titulo' => 'Frecuencia Respiratoria'],
+            ];
+        @endphp
+
+        <!-- Grid de Categorías Clínicas -->
+        <div class="row g-4">
+            @foreach($grupos as $unidad => $params)
+                <div class="col-md-6 col-xl-4">
+                    <div class="card card-clinical h-100">
+                        <div class="card-header-clinical bg-white">
+                            <h6 class="fw-bold mb-0 text-dark">
+                                <i class="bi {{ $infoCategorias[$unidad]['icono'] ?? 'bi-sliders text-secondary' }} me-2 fs-5"></i> 
+                                {{ $infoCategorias[$unidad]['titulo'] ?? 'Otros Parámetros' }}
+                            </h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-custom table-hover mb-0">
+                                <tbody>
+                                    @foreach($params as $param)
+                                        <tr>
+                                            <td class="ps-4">
+                                                <div class="fw-bold text-dark" style="font-size: 0.9rem;">{{ $param->nombre_descriptivo }}</div>
+                                                <small class="text-muted font-monospace" style="font-size: 0.75rem;">{{ $param->clave_parametro }}</small>
+                                            </td>
+                                            <td class="text-end text-nowrap">
+                                                <span class="fw-bold fs-5 me-1" style="color: var(--triage-primary);">{{ $param->valor }}</span>
+                                                <span class="text-muted small">{{ $param->unidad_medida }}</span>
+                                            </td>
+                                            <td class="text-center pe-4" style="width: 60px;">
+                                                <button type="button" class="btn btn-sm btn-light border text-primary" data-bs-toggle="modal" data-bs-target="#modalParam{{ $param->id_parametro }}" title="Modificar">
+                                                    <i class="bi bi-pencil-fill"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            @endforeach
         </div>
     </main>
+
+    <!-- Modales para editar (Mantenidos al final y fuera de las tablas) -->
+    @foreach($parametros as $param)
+    <div class="modal fade text-start" id="modalParam{{ $param->id_parametro }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <form action="{{ route('admin.catalogo.update', $param->id_parametro) }}" method="POST" class="modal-content border-0 shadow-lg">
+                @csrf @method('PUT')
+                <div class="modal-header text-white border-0" style="background-color: var(--triage-primary);">
+                    <h6 class="modal-title fw-bold">Modificar Límite</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 bg-white">
+                    <p class="text-muted small mb-3">Estás editando: <br><strong class="text-dark">{{ $param->nombre_descriptivo }}</strong></p>
+                    <div class="input-group">
+                        <input type="number" step="0.1" name="valor" class="form-control form-control-lg fw-bold text-center" value="{{ $param->valor }}" required>
+                        <span class="input-group-text bg-light text-muted fw-bold">{{ $param->unidad_medida }}</span>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-top-0 p-3">
+                    <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn fw-bold text-white btn-sm px-4" style="background-color: var(--triage-primary);">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endforeach
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

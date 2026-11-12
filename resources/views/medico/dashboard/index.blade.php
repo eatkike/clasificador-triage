@@ -3,38 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor Clínico - Clasificador Triage</title>
+    <title>Monitor Médio - Clasificador Triage</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
     <style>
-        :root {
-            --triage-primary: #1d3557; /* Azul marino ejecutivo para los médicos */
-            --triage-bg: #f8f9fa;
-        }
-        body { background-color: var(--triage-bg); font-family: 'Inter', sans-serif; }
-        .topbar { background-color: #ffffff; border-bottom: 1px solid #edf2f7; }
+        :root { --medico-primary: #2563eb; --triage-bg: #f8fafc; --text-main: #0f172a; }
+        body { background-color: var(--triage-bg); font-family: 'Inter', sans-serif; color: var(--text-main); }
+        .topbar { background-color: #ffffff; border-bottom: 1px solid #e2e8f0; }
+        .card-monitor { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); overflow: hidden; }
         
-        /* Tarjetas de Paciente */
-        .card-patient { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); transition: transform 0.2s; overflow: hidden; }
-        .card-patient:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        
-        /* Indicadores de Triage (Colores NOM-027) */
-        .border-rojo { border-left: 6px solid #e63946 !important; }
-        .border-naranja { border-left: 6px solid #f4a261 !important; }
-        .border-amarillo { border-left: 6px solid #e9c46a !important; }
-        .border-verde { border-left: 6px solid #2a9d8f !important; }
-        .border-azul { border-left: 6px solid #457b9d !important; }
+        /* Colores NOM-027 para las filas */
+        .row-rojo { border-left: 6px solid #dc3545; background-color: rgba(220, 53, 69, 0.03); }
+        .row-naranja { border-left: 6px solid #fd7e14; background-color: rgba(253, 126, 20, 0.03); }
+        .row-amarillo { border-left: 6px solid #ffc107; background-color: rgba(255, 193, 7, 0.03); }
+        .row-verde { border-left: 6px solid #198754; background-color: rgba(25, 135, 84, 0.03); }
+        .row-azul { border-left: 6px solid #0d6efd; background-color: rgba(13, 110, 253, 0.03); }
 
-        .bg-rojo { background-color: rgba(230, 57, 70, 0.1); color: #e63946; }
-        .bg-naranja { background-color: rgba(244, 162, 97, 0.1); color: #d97706; }
-        .bg-amarillo { background-color: rgba(233, 196, 106, 0.1); color: #b4860b; }
-        .bg-verde { background-color: rgba(42, 157, 143, 0.1); color: #2a9d8f; }
-        .bg-azul { background-color: rgba(69, 123, 157, 0.1); color: #457b9d; }
-
-        .btn-atender { border-radius: 8px; font-weight: 600; letter-spacing: 0.5px; }
+        .table-custom th { text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; color: #64748b; background-color: #f1f5f9; padding: 1.2rem 1rem; border-bottom: 2px solid #e2e8f0; }
+        .table-custom td { vertical-align: middle; padding: 1.2rem 1rem; border-bottom: 1px solid #e2e8f0; }
+        .badge-color { padding: 0.5rem 1rem; font-weight: 700; border-radius: 6px; letter-spacing: 0.5px; }
+        .wait-time { font-size: 1.1rem; font-weight: 700; color: #334155; }
     </style>
 </head>
 <body>
@@ -42,87 +33,112 @@
     <header class="topbar py-3 px-4 d-flex justify-content-between align-items-center sticky-top">
         <div class="d-flex align-items-center gap-3">
             <div class="bg-primary text-white rounded p-2 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                <i class="bi bi-display fs-5"></i>
+                <i class="bi bi-clipboard2-pulse fs-5"></i>
             </div>
             <div>
                 <h5 class="fw-bold mb-0 text-dark">MONITOR DE URGENCIAS</h5>
-                <small class="text-muted fw-medium">Panel Médico</small>
+                <small class="text-muted fw-medium">Sala de Espera Médica</small>
             </div>
         </div>
         <div class="d-flex align-items-center gap-4">
             <div class="text-end d-none d-md-block">
-                <p class="mb-0 fw-bold text-dark fs-6">Dr. {{ Auth::user()->nombre }} {{ Auth::user()->apellidos }}</p>
-                <small class="text-muted">Especialista en Turno</small>
+                <p class="mb-0 fw-bold text-dark fs-6">{{ Auth::user()->nombre }} {{ Auth::user()->apellidos }}</p>
+                <small class="text-muted">Médico de Turno</small>
             </div>
             <form action="{{ route('logout') }}" method="POST" class="m-0">
                 @csrf
-                <button type="submit" class="btn btn-light border shadow-sm text-danger rounded-circle"><i class="bi bi-power"></i></button>
+                <button type="submit" class="btn btn-light border shadow-sm text-danger rounded-circle" style="width: 40px; height: 40px;"><i class="bi bi-power"></i></button>
             </form>
         </div>
     </header>
 
-    <main class="container-fluid px-4 py-5" style="max-width: 1400px;">
-        
+    <main class="container-fluid py-5 px-4" style="max-width: 1400px;">
         <div class="d-flex justify-content-between align-items-end mb-4">
             <div>
-                <h4 class="fw-bold text-dark mb-1">Pacientes en Espera de Atención</h4>
-                <p class="text-muted mb-0">Ordenados automáticamente por prioridad clínica.</p>
+                <h4 class="fw-bold text-dark mb-1"><i class="bi bi-list-ol text-primary me-2"></i>Cola de Pacientes Activos</h4>
+                <p class="text-muted mb-0">Atención estrictamente basada en algoritmo de Triage (NOM-027).</p>
             </div>
-            <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill"><i class="bi bi-person-lines-fill me-2"></i> {{ $pacientesEnEspera->count() }} Pacientes</span>
+            <div>
+                <!-- Botón para refrescar la pantalla manualmente si el doctor lo desea -->
+                <button onclick="window.location.reload();" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise me-1"></i> Actualizar Monitor</button>
+            </div>
         </div>
 
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3">
-                <i class="bi bi-check-circle-fill me-2"></i> {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
-        <div class="row g-4">
-            @forelse($pacientesEnEspera as $paciente)
-                <div class="col-md-6 col-lg-4 col-xl-3">
-                    <div class="card card-patient h-100 border-{{ strtolower($paciente->color_calculado) }}">
-                        <div class="card-body p-4">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <span class="badge bg-{{ strtolower($paciente->color_calculado) }} fw-bold px-3 py-2 rounded-3 text-uppercase">
-                                    <i class="bi bi-circle-fill me-1" style="font-size: 0.6rem;"></i> CÓDIGO {{ $paciente->color_calculado }}
-                                </span>
-                                <small class="text-muted fw-bold" title="Hora de clasificación">
-                                    <i class="bi bi-clock me-1"></i>{{ \Carbon\Carbon::parse($paciente->fecha_clasificacion)->format('H:i') }}
-                                </small>
-                            </div>
+        <div class="card card-monitor">
+            <div class="table-responsive">
+                <table class="table table-custom table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Prioridad / Código</th>
+                            <th>Paciente</th>
+                            <th>Motivo / Criterio Clínico</th>
+                            <th class="text-center">Tiempo en Espera</th>
+                            <th class="text-center pe-4">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($pacientesEspera as $pac)
+                            @php
+                                // Configuración de estilos por color
+                                $colores = [
+                                    'Rojo' => ['bg' => '#dc3545', 'text' => '#fff', 'class' => 'row-rojo'],
+                                    'Naranja' => ['bg' => '#fd7e14', 'text' => '#fff', 'class' => 'row-naranja'],
+                                    'Amarillo' => ['bg' => '#ffc107', 'text' => '#000', 'class' => 'row-amarillo'],
+                                    'Verde' => ['bg' => '#198754', 'text' => '#fff', 'class' => 'row-verde'],
+                                    'Azul' => ['bg' => '#0d6efd', 'text' => '#fff', 'class' => 'row-azul']
+                                ];
+                                $estilo = $colores[$pac->color_calculado] ?? ['bg' => '#6c757d', 'text' => '#fff', 'class' => ''];
+                                
+                                // Cálculo del tiempo de espera en minutos
+                                $minutosEspera = floor(\Carbon\Carbon::parse($pac->fecha_clasificacion)->diffInMinutes(now()));
+                                $edad = \Carbon\Carbon::parse($pac->fechaNacimiento)->age;
+                            @endphp
                             
-                            <h5 class="fw-bold text-dark mb-1">{{ $paciente->nombre }} {{ $paciente->apellidoPat }}</h5>
-                            <p class="text-muted small mb-3">
-                                {{ \Carbon\Carbon::parse($paciente->fechaNacimiento)->age }} años | {{ $paciente->sexo }}
-                            </p>
-
-                            <div class="bg-light rounded p-3 mb-4 border border-light-subtle">
-                                <p class="text-dark small fw-medium mb-1"><i class="bi bi-clipboard2-pulse me-1 text-muted"></i> Criterio del Algoritmo:</p>
-                                <p class="text-muted small mb-0">{{ $paciente->criterio_aplicado }}</p>
-                            </div>
-                        </div>
-                        <div class="card-footer bg-white border-0 p-4 pt-0">
-                            <form action="{{ route('medico.atender', $paciente->id_triage) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="btn btn-outline-primary btn-atender w-100">
-                                    LLAMAR A CONSULTORIO <i class="bi bi-arrow-right-short fs-5 align-middle"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="col-12 text-center py-5">
-                    <div class="bg-white rounded-4 shadow-sm p-5 border d-inline-block">
-                        <i class="bi bi-cup-hot text-muted" style="font-size: 3rem;"></i>
-                        <h5 class="fw-bold text-dark mt-3">Sala de Espera Vacía</h5>
-                        <p class="text-muted mb-0">No hay pacientes clasificados pendientes de atención.</p>
-                    </div>
-                </div>
-            @endforelse
+                            <tr class="{{ $estilo['class'] }}">
+                                <td class="ps-4">
+                                    <span class="badge badge-color shadow-sm" style="background-color: {{ $estilo['bg'] }}; color: {{ $estilo['text'] }};">
+                                        CÓDIGO {{ strtoupper($pac->color_calculado) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <h6 class="fw-bold text-dark mb-1">{{ $pac->nombre }} {{ $pac->apellidoPat }}</h6>
+                                    <small class="text-muted"><i class="bi bi-person me-1"></i>{{ $pac->sexo }} • {{ $edad }} años</small>
+                                </td>
+                                <td>
+                                    <div class="text-dark fw-medium" style="font-size: 0.9rem;">{{ $pac->criterio_aplicado }}</div>
+                                    <small class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>{{ $pac->sintomas_cualitativos }}</small>
+                                </td>
+                                <td class="text-center">
+                                    <div class="wait-time">
+                                        <i class="bi bi-clock-history me-1 text-muted"></i> {{ $minutosEspera }} min
+                                    </div>
+                                    <small class="text-muted">Clasificado: {{ \Carbon\Carbon::parse($pac->fecha_clasificacion)->format('H:i') }}</small>
+                                </td>
+                                <td class="text-center pe-4">
+                                    <form action="{{ route('medico.atender', $pac->id_triage) }}" method="POST" class="m-0">
+                                        @csrf
+                                        <button type="submit" class="btn btn-primary fw-bold px-4">
+                                            Llamar / Atender <i class="bi bi-arrow-right ms-1"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="bi bi-check2-circle fs-1 d-block mb-3 text-success"></i>
+                                    No hay pacientes en espera en este momento.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
+
+    <!-- Refresco automático de la página cada 60 segundos para mantener el tiempo de espera actualizado -->
+    <meta http-equiv="refresh" content="60">
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

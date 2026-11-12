@@ -35,11 +35,11 @@ Route::middleware(['auth'])->group(function () {
          // Esta es la ruta para guardar la edición
         Route::put('/personal/{id_usuario}', [App\Http\Controllers\Admin\AdminController::class, 'update'])->name('personal.update');
       
-        // Reportes Estadísticos
+        // Reportes (FR9)
         Route::get('/reportes', [App\Http\Controllers\Admin\AdminController::class, 'reportes'])->name('reportes');
-        // Reportes Estadísticos
-        Route::get('/reportes', [App\Http\Controllers\Admin\AdminController::class, 'reportes'])->name('reportes');
-        
+        // El error estaba aquí, le faltaba el ->name('reportes.pdf')
+        Route::get('/reportes/pdf', [App\Http\Controllers\Admin\AdminController::class, 'descargarPdf'])->name('reportes.pdf');
+
         // Gestión de Respaldos
         Route::get('/respaldos', [App\Http\Controllers\Admin\AdminController::class, 'respaldosIndex'])->name('respaldos.index');
         Route::post('/respaldos/generar', [App\Http\Controllers\Admin\AdminController::class, 'generarRespaldo'])->name('respaldos.generar');

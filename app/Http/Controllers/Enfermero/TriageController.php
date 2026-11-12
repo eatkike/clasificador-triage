@@ -66,8 +66,7 @@ class TriageController extends Controller
 
         return view('enfermero.triage.create', compact('paciente'));
     }
-
-    // --- NUEVO CEREBRO DEL ALGORITMO NOM-027 ---
+    //cerebro de triage NOM(027)
     private function calcularColorTriage($req) {
         $color = 'Azul';
         $criterio = 'Signos vitales dentro de parámetros normales.';
@@ -80,24 +79,40 @@ class TriageController extends Controller
         $temp = $req->temperatura;
         $sintomas = $req->input('condiciones', []); 
 
-        // Extraer los parámetros dinámicos desde la base de datos (FR6)
-        $limiteFiebreNaranja = DB::table('parametros_triage')->where('clave_parametro', 'temp_fiebre_naranja')->value('valor') ?? 40.00;
-        $limiteFiebreAmarillo = DB::table('parametros_triage')->where('clave_parametro', 'temp_fiebre_amarillo')->value('valor') ?? 39.00;
-        $limiteFiebreVerde = DB::table('parametros_triage')->where('clave_parametro', 'temp_fiebre_verde')->value('valor') ?? 38.00;
+        // Extraer TODOS los parámetros del catálogo dinámico en una sola consulta
+        $limites = DB::table('parametros_triage')->pluck('valor', 'clave_parametro');
 
-        if (in_array('Inconsciente / Paro', $sintomas) || in_array('Hemorragia Severa', $sintomas) || $spo2 <= 85 || $fc <= 40 || $fc >= 130 || $fr <= 10 || $fr >= 35 || $sis <= 70) {
+        // Nivel 1: ROJO (Resucitación)
+        if (in_array('Inconsciente / Paro', $sintomas) || in_array('Hemorragia Severa', $sintomas) || 
+            $spo2 <= ($limites['spo2_rojo'] ?? 85) || 
+            $fc <= ($limites['fc_rojo_min'] ?? 40) || $fc >= ($limites['fc_rojo_max'] ?? 130) || 
+            $fr <= ($limites['fr_rojo_min'] ?? 10) || $fr >= ($limites['fr_rojo_max'] ?? 35) || 
+            $sis <= ($limites['sis_rojo_min'] ?? 70)) {
+            
             return ['color' => 'Rojo', 'criterio' => 'Compromiso vital inminente. Pasar directo a choque.'];
         } 
-        // USANDO EL PARÁMETRO DINÁMICO (NARANJA)
-        elseif (in_array('Dif. Respiratoria Severa', $sintomas) || in_array('Alteración Mental', $sintomas) || $spo2 <= 89 || $sis >= 200 || $sis <= 90 || $dia >= 120 || $temp >= $limiteFiebreNaranja || $temp <= 35) {
+        // Nivel 2: NARANJA (Emergencia)
+        elseif (in_array('Dif. Respiratoria Severa', $sintomas) || in_array('Alteración Mental', $sintomas) || 
+            $spo2 <= ($limites['spo2_naranja'] ?? 89) || 
+            $sis >= ($limites['sis_naranja_max'] ?? 200) || $sis <= ($limites['sis_naranja_min'] ?? 90) || 
+            $dia >= ($limites['dia_naranja_max'] ?? 120) || 
+            $temp >= ($limites['temp_naranja_max'] ?? 40) || $temp <= ($limites['temp_naranja_min'] ?? 35)) {
+            
             return ['color' => 'Naranja', 'criterio' => 'Emergencia. Riesgo de pérdida de función u órgano.'];
         } 
-        // USANDO EL PARÁMETRO DINÁMICO (AMARILLO)
-        elseif (in_array('Fractura Expuesta', $sintomas) || $spo2 <= 94 || $sis >= 160 || $temp >= $limiteFiebreAmarillo) {
+        // Nivel 3: AMARILLO (Urgencia)
+        elseif (in_array('Fractura Expuesta', $sintomas) || 
+            $spo2 <= ($limites['spo2_amarillo'] ?? 94) || 
+            $sis >= ($limites['sis_amarillo_max'] ?? 160) || 
+            $temp >= ($limites['temp_amarillo'] ?? 39)) {
+            
             return ['color' => 'Amarillo', 'criterio' => 'Urgencia calificada. Requiere atención rápida.'];
         } 
-        // USANDO EL PARÁMETRO DINÁMICO (VERDE)
-        elseif (in_array('Dolor Leve/Moderado', $sintomas) || $temp >= $limiteFiebreVerde || $sis >= 140) {
+        // Nivel 4: VERDE (Urgencia Menor)
+        elseif (in_array('Dolor Leve/Moderado', $sintomas) || 
+            $temp >= ($limites['temp_verde'] ?? 38) || 
+            $sis >= ($limites['sis_verde_max'] ?? 140)) {
+            
             return ['color' => 'Verde', 'criterio' => 'Urgencia menor. Paciente estable.'];
         }
 

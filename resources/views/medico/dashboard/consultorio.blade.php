@@ -97,7 +97,18 @@
                             <p class="fw-bold text-dark small text-uppercase mb-1">Criterio Algorítmico Disparado:</p>
                             <p class="text-muted small mb-0">{{ $expediente->criterio_aplicado }}</p>
                         </div>
-
+                        
+                        @if($errors->any())
+            <div class="alert alert-danger border-0 shadow-sm rounded-3 mb-4">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Error al guardar:</strong>
+                <ul class="mb-0 mt-1 text-sm">
+                    @foreach($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+                        
                         <form action="{{ route('medico.alta', $expediente->id_triage) }}" method="POST" class="flex-grow-1 d-flex flex-column">
                             @csrf
                             <div class="flex-grow-1 mb-4">

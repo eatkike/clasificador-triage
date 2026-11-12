@@ -109,20 +109,109 @@ class AdminController extends Controller
 
         return back()->with('success', $mensaje);
     }
-    public function reportes()
+    
+// Mostrar la pantalla de Reportes interactiva (Basada en el boceto)
+    public function reportes(Request $request)
     {
-        // Agrupamos el total de pacientes atendidos por cada color de Triage
-        $estadisticas = DB::table('historial_triage')
-            ->select('color_calculado', DB::raw('count(*) as total'))
-            ->groupBy('color_calculado')
-            ->get();
+        $tipo_reporte = $request->input('tipo_reporte', 'Pacientes Atendidos');
+        $turno = $request->input('turno', 'Todos');
+        
+        $query = DB::table('historial_triage')
+            ->join('pacientes', 'historial_triage.id_paciente', '=', 'pacientes.id_paciente');
 
-        // Preparamos los arrays para inyectarlos en Chart.js
-        $colores = $estadisticas->pluck('color_calculado');
-        $totales = $estadisticas->pluck('total');
+        // 1. Filtros de Fecha
+        if ($request->fecha_inicio) {
+            $query->whereDate('historial_triage.fecha_clasificacion', '>=', $request->fecha_inicio);
+        }
+        if ($request->fecha_fin) {
+            $query->whereDate('historial_triage.fecha_clasificacion', '<=', $request->fecha_fin);
+        }
 
-        return view('admin.reportes.index', compact('colores', 'totales'));
+        // 2. Filtro de Turno (Matutino: 07-15h, Vespertino: 15-23h, Nocturno: 23-07h)
+        if ($turno == 'Matutino') {
+            $query->whereRaw('TIME(historial_triage.fecha_clasificacion) BETWEEN "07:00:00" AND "14:59:59"');
+        } elseif ($turno == 'Vespertino') {
+            $query->whereRaw('TIME(historial_triage.fecha_clasificacion) BETWEEN "15:00:00" AND "22:59:59"');
+        } elseif ($turno == 'Nocturno') {
+            $query->whereRaw('(TIME(historial_triage.fecha_clasificacion) >= "23:00:00" OR TIME(historial_triage.fecha_clasificacion) <= "06:59:59")');
+        }
+
+        // 3. Cálculos de KPIs (Total y Promedio de espera)
+        $total_atendidos = $query->count();
+        
+        $avg_espera = clone $query;
+        $promedio_espera = $avg_espera->whereNotNull('historial_triage.fecha_atencion_medica')
+            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, historial_triage.fecha_clasificacion, historial_triage.fecha_atencion_medica)) as promedio')
+            ->value('promedio');
+
+        // 4. Datos para la Gráfica de Dona
+        $estadisticas = clone $query;
+        $estadisticas = $estadisticas->select('historial_triage.color_calculado', DB::raw('count(*) as total'))
+            ->groupBy('historial_triage.color_calculado')
+            ->pluck('total', 'color_calculado')->toArray();
+
+        return view('admin.reportes.index', compact('estadisticas', 'total_atendidos', 'promedio_espera', 'tipo_reporte', 'turno'));
     }
+
+    public function descargarPdf(Request $request)
+    {
+        $tipo_reporte = $request->input('tipo_reporte', 'Pacientes Atendidos');
+        $turno = $request->input('turno', 'Todos');
+        
+        $query = DB::table('historial_triage')
+            ->join('pacientes', 'historial_triage.id_paciente', '=', 'pacientes.id_paciente');
+
+        // 1. Aplicar los mismos filtros que en la pantalla web
+        if ($request->fecha_inicio) {
+            $query->whereDate('historial_triage.fecha_clasificacion', '>=', $request->fecha_inicio);
+        }
+        if ($request->fecha_fin) {
+            $query->whereDate('historial_triage.fecha_clasificacion', '<=', $request->fecha_fin);
+        }
+        if ($turno == 'Matutino') {
+            $query->whereRaw('TIME(historial_triage.fecha_clasificacion) BETWEEN "07:00:00" AND "14:59:59"');
+        } elseif ($turno == 'Vespertino') {
+            $query->whereRaw('TIME(historial_triage.fecha_clasificacion) BETWEEN "15:00:00" AND "22:59:59"');
+        } elseif ($turno == 'Nocturno') {
+            $query->whereRaw('(TIME(historial_triage.fecha_clasificacion) >= "23:00:00" OR TIME(historial_triage.fecha_clasificacion) <= "06:59:59")');
+        }
+
+        $datosTabla = clone $query;
+        $datosTabla = $datosTabla->select('pacientes.nombre', 'pacientes.apellidoPat', 'historial_triage.color_calculado', 'historial_triage.fecha_clasificacion', 'historial_triage.criterio_aplicado')
+            ->orderBy('historial_triage.fecha_clasificacion', 'desc')->get();
+
+        $estadisticas = clone $query;
+        $estadisticas = $estadisticas->select('historial_triage.color_calculado', DB::raw('count(*) as total'))
+            ->groupBy('historial_triage.color_calculado')
+            ->pluck('total', 'color_calculado')->toArray();
+
+        // 2. Generar Gráfica de Dona como Imagen (QuickChart API) para el PDF
+        $labels = []; $data = []; $colors = [];
+        $colorMap = ['Rojo' => '#dc3545', 'Naranja' => '#fd7e14', 'Amarillo' => '#ffc107', 'Verde' => '#198754', 'Azul' => '#0d6efd'];
+        
+        foreach($estadisticas as $color => $total) {
+            $labels[] = "Código " . $color;
+            $data[] = $total;
+            $colors[] = $colorMap[$color] ?? '#ccc';
+        }
+
+        $chartUrl = null;
+        if (!empty($data)) {
+            $chartConfig = [
+                'type' => 'doughnut',
+                'data' => [ 'labels' => $labels, 'datasets' => [[ 'data' => $data, 'backgroundColor' => $colors ]] ]
+            ];
+            $chartUrl = 'https://quickchart.io/chart?width=500&height=300&c=' . urlencode(json_encode($chartConfig));
+        }
+
+        // 3. Renderizar y Forzar Descarga (El return que faltaba)
+        // Asegúrate de que tengas el use Barryvdh\DomPDF\Facade\Pdf; hasta arriba del archivo
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.reportes.pdf', compact('datosTabla', 'chartUrl', 'tipo_reporte', 'turno', 'request'))
+                  ->setOption(['isRemoteEnabled' => true]);
+
+        return $pdf->download('Reporte_Triage_'. now()->format('Ymd_Hi') .'.pdf');
+    }
+
     // Mostrar la pantalla con la tabla de respaldos
     public function respaldosIndex()
     {
