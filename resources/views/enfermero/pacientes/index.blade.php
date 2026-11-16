@@ -77,61 +77,79 @@
         @endif
 
         <div class="row g-4">
-            <!-- Columna 1: Formulario de Registro -->
-            <div class="col-lg-4">
-                <div class="card card-clinical h-100">
-                    <div class="card-header-clinical">
-                        <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-person-add text-primary me-2"></i>Apertura de Expediente Físico</h6>
-                    </div>
-                    <div class="card-body p-4">
-                        <form action="{{ route('enfermero.pacientes.store') }}" method="POST">
-                            @csrf
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label">Nombre(s)</label>
-                                    <input type="text" name="nombre" class="form-control" placeholder="Nombre del paciente" required>
-                                </div>
-                                <div class="col-sm-6">
-                                    <label class="form-label">Apellido Paterno</label>
-                                    <input type="text" name="apellidoPat" class="form-control" required>
-                                </div>
-                                <div class="col-sm-6">
-                                    <label class="form-label">Apellido Materno</label>
-                                    <input type="text" name="apellidoMat" class="form-control">
-                                </div>
-                                <div class="col-sm-6">
-                                    <label class="form-label">F. Nacimiento</label>
-                                    <input type="date" name="fechaNacimiento" class="form-control" required>
-                                </div>
-                                <div class="col-sm-6">
-                                    <label class="form-label">Sexo</label>
-                                    <select name="sexo" class="form-select" required>
-                                        <option value="Masculino">Masculino</option>
-                                        <option value="Femenino">Femenino</option>
-                                    </select>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Contacto Familiar</label>
-                                    <input type="text" name="contacto_familiar" class="form-control" placeholder="Teléfono o Nombre del acompañante">
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Antecedentes Clínicos</label>
-                                    <textarea name="antecedentes_clinicos" class="form-control" rows="2" placeholder="Alergias, enfermedades crónicas..."></textarea>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Motivo de Consulta (Síntomas)</label>
-                                    <textarea name="motivo_consulta" class="form-control" rows="3" placeholder="Razón principal por la que acude a urgencias..." required></textarea>
-                                </div>
-                                <div class="col-12 mt-4 pt-2 border-top">
-                                    <button type="submit" class="btn btn-triage w-100">
-                                        <i class="bi bi-save me-2"></i>Registrar Paciente
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+    <!-- Columna 1: Formulario de Registro -->
+    <div class="col-lg-4">
+        <div class="card card-clinical h-100">
+            <div class="card-header-clinical">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-person-add text-primary me-2"></i>Apertura de Expediente Físico</h6>
             </div>
+            <div class="card-body p-4">
+                
+                <!-- ALERTA DE ERRORES DE VALIDACIÓN -->
+                @if($errors->any())
+                    <div class="alert alert-danger border-0 shadow-sm rounded-3 mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <strong class="mb-0">Error en el registro:</strong>
+                        </div>
+                        <ul class="mb-0 text-sm ps-3">
+                            @foreach($errors->all() as $err)
+                                <li>{{ $err }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                <!-- Formulario con novalidate para apagar las alertas feas del navegador -->
+                <form action="{{ route('enfermero.pacientes.store') }}" method="POST" novalidate>
+                    @csrf
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Nombre(s)</label>
+                            <!-- value="{{ old('campo') }}" retiene la información -->
+                            <input type="text" name="nombre" class="form-control" placeholder="Nombre del paciente" value="{{ old('nombre') }}" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Apellido Paterno</label>
+                            <input type="text" name="apellidoPat" class="form-control" value="{{ old('apellidoPat') }}" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Apellido Materno</label>
+                            <input type="text" name="apellidoMat" class="form-control" value="{{ old('apellidoMat') }}">
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">F. Nacimiento</label>
+                            <input type="date" name="fechaNacimiento" class="form-control" value="{{ old('fechaNacimiento') }}" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Sexo</label>
+                            <select name="sexo" class="form-select" required>
+                                <option value="Masculino" {{ old('sexo') == 'Masculino' ? 'selected' : '' }}>Masculino</option>
+                                <option value="Femenino" {{ old('sexo') == 'Femenino' ? 'selected' : '' }}>Femenino</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Contacto Familiar</label>
+                            <input type="text" name="contacto_familiar" class="form-control" placeholder="10 a 12 dígitos numéricos" value="{{ old('contacto_familiar') }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Antecedentes Clínicos</label>
+                            <textarea name="antecedentes_clinicos" class="form-control" rows="2" placeholder="Alergias, enfermedades crónicas...">{{ old('antecedentes_clinicos') }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Motivo de Consulta (Síntomas)</label>
+                            <textarea name="motivo_consulta" class="form-control" rows="3" placeholder="Razón principal por la que acude a urgencias..." required>{{ old('motivo_consulta') }}</textarea>
+                        </div>
+                        <div class="col-12 mt-4 pt-2 border-top">
+                            <button type="submit" class="btn btn-triage w-100">
+                                <i class="bi bi-save me-2"></i>Registrar Paciente
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
             <!-- Columna 2: Tabla de Pacientes -->
             <div class="col-lg-8">

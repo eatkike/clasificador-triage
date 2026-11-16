@@ -24,14 +24,18 @@ class PacienteController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nombre' => 'required|string|max:120',
+            'nombre' => 'required|string|max:60',
             'apellidoPat' => 'required|string|max:45',
             'apellidoMat' => 'nullable|string|max:45',
-            'fechaNacimiento' => 'required|date|before:today',
+            'fechaNacimiento' => 'required|date|before_or_equal:today',
             'sexo' => ['required', Rule::in(['Masculino', 'Femenino'])],
-            'contacto_familiar' => 'nullable|string|max:20',
+            'contacto_familiar' => 'nullable|numeric|digits_between:10,12',
             'antecedentes_clinicos' => 'nullable|string',
             'motivo_consulta' => 'required|string',
+        ],[
+            //mensajes de validacion
+            'fechaNacimiento.before_or_equal' => 'La fecha de nacimiento no puede ser del futuro.',
+            'contacto_familiar.numeric' => 'El teléfono solo debe contener números.'
         ]);
 
         // Por defecto, al registrarse entra en "Espera de Valoración"
