@@ -113,6 +113,16 @@ class AdminController extends Controller
 // Mostrar la pantalla de Reportes interactiva (Basada en el boceto)
     public function reportes(Request $request)
     {
+
+    // 1. VALIDACIÓN ESTRICTA DE FECHAS
+        $request->validate([
+            'fecha_inicio' => 'nullable|date',
+            'fecha_fin'    => 'nullable|date|after_or_equal:fecha_inicio'
+        ], [
+            'fecha_fin.after_or_equal' => 'Fechas inválidas: La "Fecha Fin" no puede ser anterior a la "Fecha Inicio".'
+        ]);
+
+        
         $tipo_reporte = $request->input('tipo_reporte', 'Pacientes Atendidos');
         $turno = $request->input('turno', 'Todos');
         

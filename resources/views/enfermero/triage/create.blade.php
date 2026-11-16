@@ -78,7 +78,7 @@
             </div>
         </div>
 
-        <form action="{{ route('enfermero.triage.store', $paciente->id_paciente) }}" method="POST" id="formTriage">
+        <form action="{{ route('enfermero.triage.store', $paciente->id_paciente) }}" method="POST" id="formTriage" novalidate>
             @csrf
             <div class="card card-clinical border-0 shadow-sm">
                 <div class="card-header-clinical">
@@ -151,30 +151,73 @@
             </div>
         </form>
     </main>
+        <script>
+    // Validaciones "Soft Limits" antes de enviar el formulario con SweetAlert2
+    document.getElementById('formTriage').addEventListener('submit', function(e) {
+        let warnings = [];
+        let sis = parseInt(document.querySelector('[name="presion_sistolica"]').value);
+        let dia = parseInt(document.querySelector('[name="presion_diastolica"]').value);
+        let fc = parseInt(document.querySelector('[name="frecuencia_cardiaca"]').value);
+        let fr = parseInt(document.querySelector('[name="frecuencia_respiratoria"]').value);
+        let temp = parseFloat(document.querySelector('[name="temperatura"]').value);
+        let spo2 = parseInt(document.querySelector('[name="saturacion_oxigeno"]').value);
 
-    <script>
-        // Validaciones "Soft Limits" antes de enviar el formulario
-        document.getElementById('formTriage').addEventListener('submit', function(e) {
-            let warnings = [];
-            let sis = parseInt(document.querySelector('[name="presion_sistolica"]').value);
-            let dia = parseInt(document.querySelector('[name="presion_diastolica"]').value);
-            let fc = parseInt(document.querySelector('[name="frecuencia_cardiaca"]').value);
-            let fr = parseInt(document.querySelector('[name="frecuencia_respiratoria"]').value);
-            let temp = parseFloat(document.querySelector('[name="temperatura"]').value);
-            let spo2 = parseInt(document.querySelector('[name="saturacion_oxigeno"]').value);
+        if(temp < 35.5 || temp > 39.5) warnings.push(`- Temperatura inusual (${temp}°C)`);
+        if(fc < 45 || fc > 140) warnings.push(`- Frecuencia cardíaca inusual (${fc} lpm)`);
+        if(fr < 12 || fr > 25) warnings.push(`- Frecuencia respiratoria inusual (${fr} rpm)`);
+        if(sis < 90 || sis > 180) warnings.push(`- Tensión sistólica inusual (${sis} mmHg)`);
+        if(dia < 50 || dia > 120) warnings.push(`- Tensión diastólica inusual (${dia} mmHg)`);
+        if(spo2 < 88) warnings.push(`- Saturación de O2 extremadamente baja (${spo2}%)`);
 
-            if(temp < 35.5 || temp > 39.5) warnings.push(`- Temperatura inusual (${temp}°C)`);
-            if(fc < 45 || fc > 140) warnings.push(`- Frecuencia cardíaca inusual (${fc} lpm)`);
-            if(fr < 12 || fr > 25) warnings.push(`- Frecuencia respiratoria inusual (${fr} rpm)`);
-            if(sis < 90 || sis > 180) warnings.push(`- Tensión sistólica inusual (${sis} mmHg)`);
-            if(dia < 50 || dia > 120) warnings.push(`- Tensión diastólica inusual (${dia} mmHg)`);
-            if(spo2 < 88) warnings.push(`- Saturación de O2 extremadamente baja (${spo2}%)`);
+        // Si hay al menos una advertencia
+        if(warnings.length > 0) {
+            e.preventDefault(); // 1. Detenemos el envío automático
 
-            if(warnings.length > 0) {
-                let confirmacion = confirm("⚠️ ADVERTENCIA CLÍNICA DE RANGOS\n\nSe detectaron valores que podrían indicar un compromiso vital severo o un error de captura:\n\n" + warnings.join("\n") + "\n\n¿Confirma que estos datos son correctos y proceden del monitor de signos?");
-                if(!confirmacion) e.preventDefault();
-            }
+            Swal.fire({
+                title: 'ADVERTENCIA CLÍNICA DE RANGOS',
+                // Unimos el arreglo con <br> para que haga los saltos de línea en HTML
+                html: `Se detectaron valores que podrían indicar un compromiso vital severo o un error de captura:<br><br>
+                       <div style="text-align: left; background: #f8d7da; padding: 10px; border-radius: 5px; color: #842029;">
+                           <b>${warnings.join("<br>")}</b>
+                       </div><br>
+                       ¿Confirma que estos datos son correctos y proceden del monitor de signos?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Sí, confirmar datos',
+                cancelButtonText: 'Cancelar y revisar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // 2. Si el enfermero está seguro, enviamos el formulario
+                    this.submit();
+                }
+            });
+        }
+    });
+</script>
+ 
+
+    <!-- Cargar librería de Alertas Profesionales -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+@if($errors->any())
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let listaErrores = "";
+        @foreach ($errors->all() as $error)
+            listaErrores += "• {{ $error }}<br>";
+        @endforeach
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Validación del Sistema',
+            html: listaErrores,
+            confirmButtonColor: '#0f4c5c',
+            confirmButtonText: 'Entendido, corregir'
         });
-    </script>
+    });
+</script>
+@endif
 </body>
 </html>

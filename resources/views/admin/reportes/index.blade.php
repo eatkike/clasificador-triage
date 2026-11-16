@@ -44,11 +44,24 @@
     <main class="container py-4" style="max-width: 1100px;">
         <h4 class="fw-bold mb-4 text-danger">+ GENERACIÓN DE REPORTES ESTADÍSTICOS</h4>
 
-        <div class="row g-4">
+
+            <div class="row g-4 d-flex align-items-stretch">
             <!-- PANEL IZQUIERDO: FILTROS -->
-            <div class="col-md-5">
+            <!-- Cambiamos col-md-5 a col-lg-5 para asegurar la cuadrícula en pantallas grandes -->
+            <div class="col-lg-5">
                 <div class="panel-header">Filtrar Datos</div>
                 <div class="panel-body h-100">
+                    
+                    <!-- ALERTA DE ERROR EN FECHAS -->
+                    @if($errors->any())
+                        <div class="alert alert-danger p-2 mb-3 shadow-sm" style="font-size: 0.85rem;">
+                            <strong class="d-block mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Error de consulta:</strong>
+                            @foreach($errors->all() as $err)
+                                <span>{{ $err }}</span>
+                            @endforeach
+                        </div>
+                    @endif
+
                     <form action="{{ route('admin.reportes') }}" method="GET" id="formFiltros">
                         <div class="mb-3">
                             <label class="form-label">Fecha Inicio</label>
@@ -77,7 +90,6 @@
                             </select>
                         </div>
                         
-                        <!-- Botón para actualizar la vista previa en la misma página -->
                         <button type="submit" class="btn text-white fw-bold w-100 py-2" style="background-color: var(--triage-primary);">
                             <i class="bi bi-arrow-clockwise me-2"></i> ACTUALIZAR PREVISUALIZACIÓN
                         </button>
@@ -86,19 +98,21 @@
             </div>
 
             <!-- PANEL DERECHO: PREVISUALIZACIÓN Y DESCARGA -->
-            <div class="col-md-7">
+            <div class="col-lg-7">
                 <div class="panel-header">Previsualización de Estadísticas</div>
                 <div class="panel-body d-flex flex-column h-100">
                     
                     <h6 class="fw-bold mb-4 text-center">Gráfica de {{ $tipo_reporte }} por Color Triage</h6>
                     
                     <div class="row align-items-center flex-grow-1 mb-4">
-                        <div class="col-7">
+                        <div class="col-7 text-center">
                             @if(empty($estadisticas))
-                                <p class="text-muted text-center">Sin datos en el rango seleccionado.</p>
+                                <p class="text-muted text-center mt-4">Sin datos en el rango seleccionado.</p>
                             @else
-                                <!-- Gráfica de Dona como en el boceto -->
-                                <canvas id="chartPreview"></canvas>
+                                <!-- LA CORREA DE LA GRÁFICA: Este div evita que rompa el layout -->
+                                <div style="max-width: 250px; margin: 0 auto; position: relative;">
+                                    <canvas id="chartPreview"></canvas>
+                                </div>
                             @endif
                         </div>
                         <div class="col-5">
@@ -116,7 +130,6 @@
 
                     <!-- Botones de Acción Final -->
                     <div class="d-flex gap-2 mt-auto pt-3 border-top">
-                        <!-- Este botón manda exactamente los filtros actuales a la ruta de descarga PDF -->
                         <a href="{{ route('admin.reportes.pdf', ['fecha_inicio' => request('fecha_inicio'), 'fecha_fin' => request('fecha_fin'), 'turno' => request('turno'), 'tipo_reporte' => request('tipo_reporte')]) }}" 
                            class="btn btn-primary fw-bold flex-grow-1 py-2">
                             <i class="bi bi-file-earmark-pdf-fill me-2"></i> DESCARGAR REPORTE EN PDF
@@ -129,6 +142,7 @@
                 </div>
             </div>
         </div>
+
     </main>
 
     @if(!empty($estadisticas))

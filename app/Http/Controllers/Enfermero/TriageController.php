@@ -124,17 +124,18 @@ class TriageController extends Controller
     {
         // Límites Rígidos (Hard Limits) Backend
         $request->validate([
-            'temperatura' => 'required|numeric|min:20|max:45',
+            'temperatura' => 'required|numeric|min:30|max:44.9',
             'frecuencia_cardiaca' => 'required|integer|min:0|max:300',
             'frecuencia_respiratoria' => 'required|integer|min:0|max:100',
             'presion_sistolica' => 'required|integer|min:0|max:300',
             'presion_diastolica' => 'required|integer|min:0|max:200',
             'saturacion_oxigeno' => 'required|integer|min:0|max:100',
+        ],[
+            'temperatura.max' => 'Datos incorrectos, por favor asegurese de que la temperatura sea menor a 45°, Revise y corrija'
         ]);
 
         $analisis = $this->calcularColorTriage($request);
         $sintomasStr = implode(', ', $request->input('condiciones', []));
-
         // Insertamos los signos vitales INCLUYENDO la hora de captura
         DB::table('signos_vitales')->insert([
             'id_paciente' => $id_paciente,
